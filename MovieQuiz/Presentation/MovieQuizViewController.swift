@@ -1,11 +1,9 @@
 import UIKit
 
 final class MovieQuizViewController: UIViewController {
-    @IBOutlet weak var label: UILabel!
     @IBOutlet weak var label2: UILabel!
     // MARK: - Lifecycle
     override func viewDidLoad() {
-        print(label.font.fontName)
         print(label2.font.fontName)
         super.viewDidLoad()
     }
