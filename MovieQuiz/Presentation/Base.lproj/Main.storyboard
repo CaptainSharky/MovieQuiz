@@ -25,35 +25,35 @@
                         <rect key="frame" x="0.0" y="0.0" width="440" height="956"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" distribution="equalSpacing" spacing="20" translatesAutoresizingMaskIntoConstraints="NO" id="X3I-oB-lEt">
+                            <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="20" translatesAutoresizingMaskIntoConstraints="NO" id="X3I-oB-lEt">
                                 <rect key="frame" x="20" y="72" width="400" height="850"/>
                                 <subviews>
-                                    <stackView opaque="NO" contentMode="scaleToFill" spacing="266" translatesAutoresizingMaskIntoConstraints="NO" id="gAa-aw-Uj1">
-                                        <rect key="frame" x="0.0" y="0.0" width="400" height="23.666666666666668"/>
+                                    <stackView opaque="NO" contentMode="scaleToFill" distribution="equalCentering" translatesAutoresizingMaskIntoConstraints="NO" id="gAa-aw-Uj1" userLabel="Topscreen labels">
+                                        <rect key="frame" x="0.0" y="0.0" width="400" height="23.333333333333332"/>
                                         <subviews>
                                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Вопрос:" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="wVW-fa-dqp" userLabel="Question Title Label">
-                                                <rect key="frame" x="0.0" y="0.0" width="98" height="23.666666666666668"/>
+                                                <rect key="frame" x="0.0" y="0.0" width="76" height="23.333333333333332"/>
                                                 <fontDescription key="fontDescription" name="YSDisplay-Medium" family="YS Display" pointSize="20"/>
                                                 <color key="textColor" name="YP White"/>
                                                 <nil key="highlightedColor"/>
                                             </label>
                                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="252" verticalHuggingPriority="251" text="1/10" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="g12-Dn-ezQ" userLabel="Index Label">
-                                                <rect key="frame" x="364" y="0.0" width="36" height="23.666666666666668"/>
+                                                <rect key="frame" x="359.66666666666669" y="0.0" width="40.333333333333314" height="23.333333333333332"/>
                                                 <fontDescription key="fontDescription" name="YSDisplay-Medium" family="YS Display" pointSize="20"/>
                                                 <color key="textColor" name="YP White"/>
                                                 <nil key="highlightedColor"/>
                                             </label>
                                         </subviews>
                                     </stackView>
-                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="6lm-gl-46Q" userLabel="Preview Image">
-                                        <rect key="frame" x="0.0" y="61" width="400" height="600"/>
+                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="248" verticalHuggingPriority="248" horizontalCompressionResistancePriority="749" translatesAutoresizingMaskIntoConstraints="NO" id="6lm-gl-46Q" userLabel="Preview Image">
+                                        <rect key="frame" x="0.0" y="43.333333333333314" width="400" height="600"/>
                                         <color key="backgroundColor" name="YP White"/>
                                         <constraints>
                                             <constraint firstAttribute="width" secondItem="6lm-gl-46Q" secondAttribute="height" multiplier="2:3" id="EUh-qf-E2C"/>
                                         </constraints>
                                     </imageView>
                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Рейтинг этого фильма меньше, чем 5?" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="4yl-XL-5Jh" userLabel="Question Label">
-                                        <rect key="frame" x="0.0" y="698.66666666666663" width="400" height="54"/>
+                                        <rect key="frame" x="0.0" y="663.33333333333337" width="400" height="106.66666666666663"/>
                                         <fontDescription key="fontDescription" name="YSDisplay-Bold" family="YS Display" pointSize="23"/>
                                         <color key="textColor" name="YP White"/>
                                         <nil key="highlightedColor"/>
@@ -77,6 +77,9 @@
                                                         <integer key="value" value="15"/>
                                                     </userDefinedRuntimeAttribute>
                                                 </userDefinedRuntimeAttributes>
+                                                <connections>
+                                                    <action selector="noButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="cb8-so-nxo"/>
+                                                </connections>
                                             </button>
                                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="OT7-iu-MOX" userLabel="Yes button">
                                                 <rect key="frame" x="210" y="0.0" width="190" height="60"/>
@@ -91,13 +94,13 @@
                                                         <integer key="value" value="15"/>
                                                     </userDefinedRuntimeAttribute>
                                                 </userDefinedRuntimeAttributes>
+                                                <connections>
+                                                    <action selector="yesButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="C5n-pM-62j"/>
+                                                </connections>
                                             </button>
                                         </subviews>
                                     </stackView>
                                 </subviews>
-                                <constraints>
-                                    <constraint firstItem="5BL-ws-lCT" firstAttribute="centerX" secondItem="X3I-oB-lEt" secondAttribute="centerX" id="cwQ-Qw-VeD"/>
-                                </constraints>
                             </stackView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
@@ -109,6 +112,11 @@
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="X3I-oB-lEt" secondAttribute="trailing" constant="20" id="xdo-cv-qcW"/>
                         </constraints>
                     </view>
+                    <connections>
+                        <outlet property="counterLabel" destination="g12-Dn-ezQ" id="yUQ-cL-1iF"/>
+                        <outlet property="imageView" destination="6lm-gl-46Q" id="RXC-Wp-RtB"/>
+                        <outlet property="textLabel" destination="4yl-XL-5Jh" id="MHX-Ik-MOY"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
