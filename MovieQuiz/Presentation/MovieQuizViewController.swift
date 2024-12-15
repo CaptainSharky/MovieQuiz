@@ -1,12 +1,15 @@
 import UIKit
 
 final class MovieQuizViewController: UIViewController {
-    @IBOutlet private weak var imageView: UIImageView!
-    @IBOutlet private weak var textLabel: UILabel!
-    @IBOutlet private weak var counterLabel: UILabel!
+    @IBOutlet private weak var imageView: UIImageView! // Постер
+    @IBOutlet private weak var textLabel: UILabel!     // Вопрос
+    @IBOutlet private weak var counterLabel: UILabel!  // Счётчик
     
+    // Индекс текущего вопроса
     private var currentQuestionIndex: Int = 0
+    // Кол-во правильных ответов
     private var correctAnswers: Int = 0
+    // Mock вопросы
     private let questions: [QuizQuestion] = [
         QuizQuestion(
             image: "The Godfather",
@@ -53,12 +56,15 @@ final class MovieQuizViewController: UIViewController {
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        // Отображение 1 вопроса при запуске
         let currentQuestion = questions[currentQuestionIndex]
         let currentQuestionViewModel = convert(model: currentQuestion)
         
         show(quiz: currentQuestionViewModel)
     }
     
+    // Конвертация из mock в view model
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         QuizStepViewModel(
             image: UIImage(named: model.image) ?? UIImage(),
@@ -66,18 +72,25 @@ final class MovieQuizViewController: UIViewController {
             questionNumber: "\(currentQuestionIndex + 1)/\(questions.count)")
     }
     
+    // Отобразить вопрос
     private func show(quiz step: QuizStepViewModel) {
+        // Сбрасываем рамку предыдущего ответа
+        resetAnswerBorder()
+        
         imageView.image = step.image
         textLabel.text = step.question
         counterLabel.text = step.questionNumber
     }
     
+    // Отобразить алерт результатов
     private func show(quiz result: QuizResultsViewModel) {
+        // Алерт
         let alert = UIAlertController(
             title: result.title,
             message: result.text,
             preferredStyle: .alert)
         
+        // Действие
         let action = UIAlertAction(
             title: result.buttonText,
             style: .default) { _ in
@@ -94,19 +107,13 @@ final class MovieQuizViewController: UIViewController {
         self.present(alert, animated: true, completion: nil)
     }
     
-    private func showAnswerResult(isCorrect: Bool) {
-        imageView.layer.masksToBounds = true
-        imageView.layer.borderWidth = 8
-        imageView.layer.cornerRadius = 20
-        imageView.layer.borderColor = isCorrect ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
-        
-        if isCorrect { correctAnswers += 1}
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            self.showNextQuestionOrResult()
-        }
+    // Сбросить рамку ответа
+    private func resetAnswerBorder() {
+        imageView.layer.borderWidth = 0
+        imageView.layer.borderColor = UIColor.clear.cgColor
     }
     
+    // Проверка окончания раунда || следующий вопрос
     private func showNextQuestionOrResult() {
         if currentQuestionIndex == questions.count - 1 {
             let text = "Ваш результат: \(correctAnswers)/10"
@@ -122,38 +129,58 @@ final class MovieQuizViewController: UIViewController {
             let nextQuestion = questions[currentQuestionIndex]
             let viewModel = convert(model: nextQuestion)
             
+            // Показываем текущий вопрос
             show(quiz: viewModel)
         }
     }
     
-    @IBAction private func yesButton(_ sender: Any) {
+    // Отрисовка ответа + переход
+    private func showAnswerResult(isCorrect: Bool) {
+        imageView.layer.masksToBounds = true
+        imageView.layer.borderWidth = 8
+        imageView.layer.cornerRadius = 20
+        imageView.layer.borderColor = isCorrect ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
+        
+        if isCorrect { correctAnswers += 1}
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.showNextQuestionOrResult()
+        }
+    }
+    
+    private func handleAnswer(_ answer: Bool) {
         let currentQuestion = questions[currentQuestionIndex]
-        let answer = true
         
         showAnswerResult(isCorrect: answer == currentQuestion.correctAnswer)
     }
     
-    @IBAction private func noButton(_ sender: Any) {
-        let currentQuestion = questions[currentQuestionIndex]
-        let answer = false
-        
-        showAnswerResult(isCorrect: answer == currentQuestion.correctAnswer)
+    // Нажал "Да"
+    @IBAction private func yesButtonClicked(_ sender: Any) {
+        handleAnswer(true)
+    }
+    
+    // Нажал "Нет"
+    @IBAction private func noButtonClicked(_ sender: Any) {
+        handleAnswer(false)
     }
 }
 
-struct QuizQuestion {
+// Mock вопрос
+private struct QuizQuestion {
     let image: String
     let text: String
     let correctAnswer: Bool
 }
 
-struct QuizStepViewModel {
+// Вью вопроса
+private struct QuizStepViewModel {
     let image: UIImage
     let question: String
     let questionNumber: String
 }
 
-struct QuizResultsViewModel {
+// Вью результатов
+private struct QuizResultsViewModel {
     let title: String
     let text: String
     let buttonText: String
