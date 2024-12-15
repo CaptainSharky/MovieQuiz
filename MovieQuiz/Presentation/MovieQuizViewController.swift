@@ -4,6 +4,8 @@ final class MovieQuizViewController: UIViewController {
     @IBOutlet private weak var imageView: UIImageView! // Постер
     @IBOutlet private weak var textLabel: UILabel!     // Вопрос
     @IBOutlet private weak var counterLabel: UILabel!  // Счётчик
+    @IBOutlet weak var yesButton: UIButton! // Кнопка "Да"
+    @IBOutlet weak var noButton: UIButton!  // Кнопка "Нет"
     
     // Индекс текущего вопроса
     private var currentQuestionIndex: Int = 0
@@ -72,10 +74,18 @@ final class MovieQuizViewController: UIViewController {
             questionNumber: "\(currentQuestionIndex + 1)/\(questions.count)")
     }
     
+    // Вкл/выкл кнопок
+    private func switchButtonMode(enable: Bool) {
+        yesButton.isEnabled = enable
+        noButton.isEnabled = enable
+    }
+    
     // Отобразить вопрос
     private func show(quiz step: QuizStepViewModel) {
         // Сбрасываем рамку предыдущего ответа
         resetAnswerBorder()
+        // Включаем кнопки
+        switchButtonMode(enable: true)
         
         imageView.image = step.image
         textLabel.text = step.question
@@ -134,21 +144,32 @@ final class MovieQuizViewController: UIViewController {
         }
     }
     
-    // Отрисовка ответа + переход
-    private func showAnswerResult(isCorrect: Bool) {
+    // Нарисовать рамку-ответ
+    private func drawBorder(_ isCorrect: Bool) {
         imageView.layer.masksToBounds = true
         imageView.layer.borderWidth = 8
         imageView.layer.cornerRadius = 20
         imageView.layer.borderColor = isCorrect ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
+    }
+    
+    // Отрисовка ответа + переход
+    private func showAnswerResult(isCorrect: Bool) {
+        // Рисуем рамку
+        drawBorder(isCorrect)
         
         if isCorrect { correctAnswers += 1}
         
+        // Задержка 1 секунда перед след. вопросом
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             self.showNextQuestionOrResult()
         }
     }
     
+    // Обработать ответ
     private func handleAnswer(_ answer: Bool) {
+        // Выключаем кнопки
+        switchButtonMode(enable: false)
+        
         let currentQuestion = questions[currentQuestionIndex]
         
         showAnswerResult(isCorrect: answer == currentQuestion.correctAnswer)
