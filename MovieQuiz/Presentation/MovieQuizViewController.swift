@@ -103,7 +103,9 @@ final class MovieQuizViewController: UIViewController {
         // Действие
         let action = UIAlertAction(
             title: result.buttonText,
-            style: .default) { _ in
+            style: .default) { [weak self] _ in // слабая ссылка на self
+                guard let self = self else { return }
+                
                 self.currentQuestionIndex = 0
                 self.correctAnswers = 0
                 
@@ -160,7 +162,8 @@ final class MovieQuizViewController: UIViewController {
         if isCorrect { correctAnswers += 1}
         
         // Задержка 1 секунда перед след. вопросом
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            guard let self = self else { return }
             self.showNextQuestionOrResult()
         }
     }
