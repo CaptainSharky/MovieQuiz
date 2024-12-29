@@ -14,7 +14,7 @@ final class MovieQuizViewController: UIViewController {
     // Количество вопросов
     private let questionsAmount: Int = 10
     // Фабрика вопросов
-    private var questionFactory: QuestionFactory = QuestionFactory()
+    private var questionFactory: QuestionFactoryProtocol = QuestionFactory()
     // Вопрос для пользователя
     private var currentQuestion: QuizQuestion?
     

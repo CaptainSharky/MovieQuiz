@@ -1,6 +1,6 @@
 import Foundation
 
-class QuestionFactory {
+class QuestionFactory: QuestionFactoryProtocol {
     // Mock вопросы
     private let questions: [QuizQuestion] = [
         QuizQuestion(
