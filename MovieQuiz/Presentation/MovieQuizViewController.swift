@@ -1,6 +1,6 @@
 import UIKit
 
-final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
+final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, AlertPresenterDelegate {
     @IBOutlet private weak var imageView: UIImageView! // Постер
     @IBOutlet private weak var textLabel: UILabel!     // Вопрос
     @IBOutlet private weak var counterLabel: UILabel!  // Счётчик
@@ -17,21 +17,28 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private var questionFactory: QuestionFactoryProtocol?
     // Вопрос для пользователя
     private var currentQuestion: QuizQuestion?
+    // Экран алерта
+    private var alertPresenter: AlertPresenterProtocol?
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        // Делегирование в фабрику вопросов
         let questionFactory = QuestionFactory()
         questionFactory.delegate = self
         self.questionFactory = questionFactory
+        
+        // Делегирование в экран алерта
+        let alertPresenter = AlertPresenter()
+        alertPresenter.delegate = self
+        self.alertPresenter = alertPresenter
         
         // Отображение 1 вопроса при запуске
         questionFactory.requestNextQuestion()
     }
     
     // MARK: - QuestionFactoryDelegate
-    
     func didReceiveNextQuestion(question: QuizQuestion?) {
         guard let question = question else {
             return
@@ -43,6 +50,13 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         DispatchQueue.main.async { [weak self] in
             self?.show(quiz: viewModel)
         }
+    }
+    
+    // MARK: - AlertPresenterDelegate
+    // Отображение алерта
+    func didReceiveAlert(alert: UIAlertController, action: UIAlertAction) {
+        alert.addAction(action)
+        self.present(alert, animated: true)
     }
     
     // MARK: - Private functions
@@ -72,31 +86,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         counterLabel.text = step.questionNumber
     }
     
-    // Отобразить алерт результатов
-    private func show(quiz result: QuizResultsViewModel) {
-        // Алерт
-        let alert = UIAlertController(
-            title: result.title,
-            message: result.text,
-            preferredStyle: .alert)
-        
-        // Действие
-        let action = UIAlertAction(
-            title: result.buttonText,
-            style: .default) { [weak self] _ in // слабая ссылка на self
-                guard let self = self else { return }
-                
-                self.currentQuestionIndex = 0
-                self.correctAnswers = 0
-                
-                questionFactory?.requestNextQuestion()
-            }
-        
-        alert.addAction(action)
-        
-        self.present(alert, animated: true, completion: nil)
-    }
-    
     // Сбросить рамку ответа
     private func resetAnswerBorder() {
         imageView.layer.borderWidth = 0
@@ -105,17 +94,29 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     // Проверка окончания раунда || следующий вопрос
     private func showNextQuestionOrResult() {
+        // Завершаем раунд если кончились вопросы
         if currentQuestionIndex == questionsAmount - 1 {
+            // Текст алерта в зависимости от успеха прохождения
             let text = correctAnswers == questionsAmount ?
             "Поздравляем, вы ответили на 10 из 10!" :
             "Вы ответили на \(correctAnswers) из 10, попробуйте ещё раз!"
-            let viewModel = QuizResultsViewModel(
-                title: "Этот раунд окончен!",
-                text: text,
-                buttonText: "Сыграть ещё раз")
             
-            show(quiz: viewModel)
-        } else {
+            // Модель алерта
+            let alertModel = AlertModel(
+                title: "Этот раунд окончен!",
+                message: text,
+                buttonText: "Сыграть ещё раз"
+            ) { [weak self] in
+                    guard let self = self else { return }
+                    self.currentQuestionIndex = 0
+                    self.correctAnswers = 0
+                    self.questionFactory?.requestNextQuestion()
+                }
+            
+            // Делегируем показ алерта в презентер
+            alertPresenter?.showAlert(model: alertModel)
+            
+        } else { // Иначе продолжаем раунд
             currentQuestionIndex += 1
             
             self.questionFactory?.requestNextQuestion()
