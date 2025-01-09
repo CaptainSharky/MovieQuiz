@@ -4,8 +4,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     @IBOutlet private weak var imageView: UIImageView! // Постер
     @IBOutlet private weak var textLabel: UILabel!     // Вопрос
     @IBOutlet private weak var counterLabel: UILabel!  // Счётчик
-    @IBOutlet weak var yesButton: UIButton! // Кнопка "Да"
-    @IBOutlet weak var noButton: UIButton!  // Кнопка "Нет"
+    @IBOutlet private weak var yesButton: UIButton!    // Кнопка "Да"
+    @IBOutlet private weak var noButton: UIButton!     // Кнопка "Нет"
     
     // Индекс текущего вопроса
     private var currentQuestionIndex: Int = 0
@@ -19,6 +19,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     private var currentQuestion: QuizQuestion?
     // Экран алерта
     private var alertPresenter: AlertPresenterProtocol?
+    // Хранение статистики
+    private var statisticService: StatisticServiceProtocol?
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -29,16 +31,20 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         questionFactory.delegate = self
         self.questionFactory = questionFactory
         
+        // Отображение 1 вопроса при запуске
+        questionFactory.requestNextQuestion()
+        
         // Делегирование в экран алерта
         let alertPresenter = AlertPresenter()
         alertPresenter.delegate = self
         self.alertPresenter = alertPresenter
         
-        // Отображение 1 вопроса при запуске
-        questionFactory.requestNextQuestion()
+        // Инициализация хранителя статистики
+        statisticService = StatisticService()
     }
     
     // MARK: - QuestionFactoryDelegate
+    // Получили модель вопроса
     func didReceiveNextQuestion(question: QuizQuestion?) {
         guard let question = question else {
             return
@@ -47,6 +53,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         currentQuestion = question
         let viewModel = convert(model: question)
         
+        // Отображение полученного вопроса
         DispatchQueue.main.async { [weak self] in
             self?.show(quiz: viewModel)
         }
@@ -96,10 +103,16 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     private func showNextQuestionOrResult() {
         // Завершаем раунд если кончились вопросы
         if currentQuestionIndex == questionsAmount - 1 {
-            // Текст алерта в зависимости от успеха прохождения
-            let text = correctAnswers == questionsAmount ?
-            "Поздравляем, вы ответили на 10 из 10!" :
-            "Вы ответили на \(correctAnswers) из 10, попробуйте ещё раз!"
+            guard let statisticService else { return }
+            // Модель результата текущей игры
+            let result = GameResult(correct: correctAnswers,
+                                    total: questionsAmount,
+                                    date: Date())
+            // Сохраняем данные
+            statisticService.store(current: result)
+            
+            // Получаем текст статистики
+            let text = "Ваш результат: \(correctAnswers)/\(questionsAmount)\n" + statisticService.getStatistics()
             
             // Модель алерта
             let alertModel = AlertModel(
@@ -119,6 +132,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         } else { // Иначе продолжаем раунд
             currentQuestionIndex += 1
             
+            // Показываем следующий вопрос
             self.questionFactory?.requestNextQuestion()
         }
     }
