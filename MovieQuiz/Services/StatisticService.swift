@@ -6,9 +6,12 @@ final class StatisticService: StatisticServiceProtocol {
     
     private enum Keys: String {
         // Текущие результаты
-        case correct
-        case total
-        case date
+        enum Result: String {
+            case correct
+            case total
+            case date
+        }
+        
         // Сохраненные данные
         case bestGame
         case gamesCount
@@ -28,14 +31,14 @@ final class StatisticService: StatisticServiceProtocol {
     // Рекорд результата по кол-ву правильных ответов
     var bestGame: GameResult {
         get {
-            GameResult(correct: storage.integer(forKey: Keys.correct.rawValue),
-                       total: storage.integer(forKey: Keys.total.rawValue),
-                       date: storage.object(forKey: Keys.date.rawValue) as? Date ?? Date())
+            GameResult(correct: storage.integer(forKey: Keys.Result.correct.rawValue),
+                       total: storage.integer(forKey: Keys.Result.total.rawValue),
+                       date: storage.object(forKey: Keys.Result.date.rawValue) as? Date ?? Date())
         }
         set {
-            storage.set(newValue.correct, forKey: Keys.correct.rawValue)
-            storage.set(newValue.total, forKey: Keys.total.rawValue)
-            storage.set(newValue.date, forKey: Keys.date.rawValue)
+            storage.set(newValue.correct, forKey: Keys.Result.correct.rawValue)
+            storage.set(newValue.total, forKey: Keys.Result.total.rawValue)
+            storage.set(newValue.date, forKey: Keys.Result.date.rawValue)
         }
     }
     
