@@ -6,7 +6,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     @IBOutlet private weak var counterLabel: UILabel!  // Счётчик
     @IBOutlet private weak var yesButton: UIButton!    // Кнопка "Да"
     @IBOutlet private weak var noButton: UIButton!     // Кнопка "Нет"
-    
+    @IBOutlet private weak var activityIndicator: UIActivityIndicatorView! // Индикатор загрузки
     // Индекс текущего вопроса
     private var currentQuestionIndex: Int = 0
     // Кол-во правильных ответов
@@ -67,6 +67,37 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     }
     
     // MARK: - Private functions
+    // Отображение индикатора загрузки
+    private func showLoadingIndicator() {
+        activityIndicator.isHidden = false
+        activityIndicator.startAnimating()
+    }
+    
+    // Выключение индикатора загрузки
+    private func hideLoadingIndicator() {
+        activityIndicator.stopAnimating()
+        activityIndicator.isHidden = true
+    }
+    
+    // Отобразить алерт сетевой ошибки
+    private func showNetworkError(message: String) {
+        hideLoadingIndicator()
+        
+        let alertModel = AlertModel(
+            title: "Ошибка",
+            message: message,
+            buttonText: "Попробовать ещё раз"
+        ) { [weak self] in
+            guard let self = self else { return }
+            self.currentQuestionIndex = 0
+            self.correctAnswers = 0
+            
+            self.questionFactory?.requestNextQuestion()
+        }
+        
+        alertPresenter?.showAlert(model: alertModel)
+    }
+    
     // Конвертация из mock в view model
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         QuizStepViewModel(
