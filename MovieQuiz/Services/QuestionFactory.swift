@@ -49,13 +49,12 @@ class QuestionFactory: QuestionFactoryProtocol {
             correctAnswer: false)
     ]
     */
-    
-    
     init(moviesLoader: MoviesLoading, delegate: QuestionFactoryDelegate?) {
         self.moviesLoader = moviesLoader
         self.delegate = delegate
     }
     
+    // Загрузить данные фильмов
     func loadData() {
         moviesLoader.loadMovies { [weak self] result in
             DispatchQueue.main.async {
@@ -71,6 +70,7 @@ class QuestionFactory: QuestionFactoryProtocol {
         }
     }
     
+    // Готовим модель вопроса
     func requestNextQuestion() {
         DispatchQueue.global().async { [weak self] in
             guard let self = self else { return }
@@ -84,6 +84,10 @@ class QuestionFactory: QuestionFactoryProtocol {
                 imageData = try Data(contentsOf: movie.resizedImageURL)
             } catch {
                 print("Failed to load image")
+                DispatchQueue.main.async {
+                    self.delegate?.didFailToLoadPoster()
+                }
+                return
             }
             
             let rating = Float(movie.rating) ?? 0
