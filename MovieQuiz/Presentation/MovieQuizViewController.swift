@@ -6,7 +6,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     @IBOutlet private weak var counterLabel: UILabel!  // Счётчик
     @IBOutlet private weak var yesButton: UIButton!    // Кнопка "Да"
     @IBOutlet private weak var noButton: UIButton!     // Кнопка "Нет"
-    
+    @IBOutlet private weak var activityIndicator: UIActivityIndicatorView! // Индикатор загрузки
     // Индекс текущего вопроса
     private var currentQuestionIndex: Int = 0
     // Кол-во правильных ответов
@@ -27,12 +27,11 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         super.viewDidLoad()
         
         // Делегирование в фабрику вопросов
-        let questionFactory = QuestionFactory()
-        questionFactory.delegate = self
-        self.questionFactory = questionFactory
+        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
         
-        // Отображение 1 вопроса при запуске
-        questionFactory.requestNextQuestion()
+        // Загружаем данные
+        showLoadingIndicator()
+        questionFactory?.loadData()
         
         // Делегирование в экран алерта
         let alertPresenter = AlertPresenter()
@@ -59,6 +58,19 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         }
     }
     
+    func didLoadDataFromServer() {
+        hideLoadingIndicator()
+        questionFactory?.requestNextQuestion()
+    }
+    
+    func didFailToLoadData(with error: Error) {
+        showNetworkError(message: error.localizedDescription)
+    }
+    
+    func didFailToLoadPoster() {
+        showNetworkError(message: "Не удалось загрузить постер фильма")
+    }
+    
     // MARK: - AlertPresenterDelegate
     // Отображение алерта
     func didReceiveAlert(alert: UIAlertController, action: UIAlertAction) {
@@ -67,10 +79,39 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     }
     
     // MARK: - Private functions
+    // Отображение индикатора загрузки
+    private func showLoadingIndicator() {
+        activityIndicator.startAnimating()
+    }
+    
+    // Выключение индикатора загрузки
+    private func hideLoadingIndicator() {
+        activityIndicator.stopAnimating()
+    }
+    
+    // Отобразить алерт сетевой ошибки
+    private func showNetworkError(message: String) {
+        hideLoadingIndicator()
+        
+        let alertModel = AlertModel(
+            title: "Ошибка",
+            message: message,
+            buttonText: "Попробовать ещё раз"
+        ) { [weak self] in
+            guard let self = self else { return }
+            self.currentQuestionIndex = 0
+            self.correctAnswers = 0
+            
+            self.questionFactory?.loadData()
+        }
+        
+        alertPresenter?.showAlert(model: alertModel)
+    }
+    
     // Конвертация из mock в view model
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         QuizStepViewModel(
-            image: UIImage(named: model.image) ?? UIImage(),
+            image: UIImage(data: model.image) ?? UIImage(),
             question: model.text,
             questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
     }
