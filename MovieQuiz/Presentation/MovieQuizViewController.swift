@@ -11,8 +11,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     private var correctAnswers: Int = 0
     // Фабрика вопросов
     private var questionFactory: QuestionFactoryProtocol?
-    // Вопрос для пользователя
-    private var currentQuestion: QuizQuestion?
     // Экран алерта
     private var alertPresenter: AlertPresenterProtocol?
     // Хранение статистики
@@ -23,6 +21,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
+        presenter.viewController = self
         
         // Делегирование в фабрику вопросов
         questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
@@ -47,7 +46,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
             return
         }
         
-        currentQuestion = question
+        presenter.currentQuestion = question
         let viewModel = presenter.convert(model: question)
         
         // Отображение полученного вопроса
@@ -74,6 +73,27 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     func didReceiveAlert(alert: UIAlertController, action: UIAlertAction) {
         alert.addAction(action)
         self.present(alert, animated: true)
+    }
+    
+    // MARK: - Public functions
+    // Отрисовка ответа + переход
+    func showAnswerResult(isCorrect: Bool) {
+        // Рисуем рамку
+        drawBorder(isCorrect)
+        
+        if isCorrect { correctAnswers += 1}
+        
+        // Задержка 1 секунда перед след. вопросом
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            guard let self = self else { return }
+            self.showNextQuestionOrResult()
+        }
+    }
+    
+    // Вкл/выкл кнопок
+    func switchButtonMode(to mode: Bool) {
+        yesButton.isEnabled = mode
+        noButton.isEnabled = mode
     }
     
     // MARK: - Private functions
@@ -104,12 +124,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         }
         
         alertPresenter?.showAlert(model: alertModel)
-    }
-    
-    // Вкл/выкл кнопок
-    private func switchButtonMode(to mode: Bool) {
-        yesButton.isEnabled = mode
-        noButton.isEnabled = mode
     }
     
     // Отобразить вопрос
@@ -176,40 +190,14 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         imageView.layer.borderColor = isCorrect ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
     }
     
-    // Отрисовка ответа + переход
-    private func showAnswerResult(isCorrect: Bool) {
-        // Рисуем рамку
-        drawBorder(isCorrect)
-        
-        if isCorrect { correctAnswers += 1}
-        
-        // Задержка 1 секунда перед след. вопросом
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            guard let self = self else { return }
-            self.showNextQuestionOrResult()
-        }
-    }
-    
-    // Обработать ответ
-    private func handleAnswer(_ answer: Bool) {
-        // Выключаем кнопки
-        switchButtonMode(to: false)
-        
-        guard let currentQuestion = currentQuestion else {
-            return
-        }
-        
-        showAnswerResult(isCorrect: answer == currentQuestion.correctAnswer)
-    }
-    
     // MARK: - Actions
     // Нажал "Да"
     @IBAction private func yesButtonClicked(_ sender: Any) {
-        handleAnswer(true)
+        presenter.handleAnswer(true)
     }
     
     // Нажал "Нет"
     @IBAction private func noButtonClicked(_ sender: Any) {
-        handleAnswer(false)
+        presenter.handleAnswer(false)
     }
 }

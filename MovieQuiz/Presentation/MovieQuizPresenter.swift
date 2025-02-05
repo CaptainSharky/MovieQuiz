@@ -5,6 +5,10 @@ final class MovieQuizPresenter {
     let questionsAmount: Int = 10
     // Индекс текущего вопроса
     private var currentQuestionIndex: Int = 0
+    // Вопрос для пользователя
+    var currentQuestion: QuizQuestion?
+    // Controller
+    weak var viewController: MovieQuizViewController?
     
     func isLastQuestion() -> Bool {
         currentQuestionIndex == questionsAmount - 1
@@ -24,5 +28,17 @@ final class MovieQuizPresenter {
             image: UIImage(data: model.image) ?? UIImage(),
             question: model.text,
             questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
+    }
+    
+    // Обработать ответ кнопки
+    func handleAnswer(_ answer: Bool) {
+        // Выключаем кнопки
+        viewController?.switchButtonMode(to: false)
+        
+        guard let currentQuestion = currentQuestion else {
+            return
+        }
+        
+        viewController?.showAnswerResult(isCorrect: answer == currentQuestion.correctAnswer)
     }
 }
