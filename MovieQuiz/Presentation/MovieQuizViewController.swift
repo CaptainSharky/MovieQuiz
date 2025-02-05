@@ -7,12 +7,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     @IBOutlet private weak var yesButton: UIButton!    // Кнопка "Да"
     @IBOutlet private weak var noButton: UIButton!     // Кнопка "Нет"
     @IBOutlet private weak var activityIndicator: UIActivityIndicatorView! // Индикатор загрузки
-    // Индекс текущего вопроса
-    private var currentQuestionIndex: Int = 0
     // Кол-во правильных ответов
     private var correctAnswers: Int = 0
-    // Количество вопросов
-    private let questionsAmount: Int = 10
     // Фабрика вопросов
     private var questionFactory: QuestionFactoryProtocol?
     // Вопрос для пользователя
@@ -21,6 +17,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     private var alertPresenter: AlertPresenterProtocol?
     // Хранение статистики
     private var statisticService: StatisticServiceProtocol?
+    // Presenter
+    private let presenter = MovieQuizPresenter()
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -50,7 +48,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         }
         
         currentQuestion = question
-        let viewModel = convert(model: question)
+        let viewModel = presenter.convert(model: question)
         
         // Отображение полученного вопроса
         DispatchQueue.main.async { [weak self] in
@@ -99,21 +97,13 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
             buttonText: "Попробовать ещё раз"
         ) { [weak self] in
             guard let self = self else { return }
-            self.currentQuestionIndex = 0
+            self.presenter.resetQuestionIndex()
             self.correctAnswers = 0
             
             self.questionFactory?.loadData()
         }
         
         alertPresenter?.showAlert(model: alertModel)
-    }
-    
-    // Конвертация из mock в view model
-    private func convert(model: QuizQuestion) -> QuizStepViewModel {
-        QuizStepViewModel(
-            image: UIImage(data: model.image) ?? UIImage(),
-            question: model.text,
-            questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
     }
     
     // Вкл/выкл кнопок
@@ -143,17 +133,17 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     // Проверка окончания раунда || следующий вопрос
     private func showNextQuestionOrResult() {
         // Завершаем раунд если кончились вопросы
-        if currentQuestionIndex == questionsAmount - 1 {
+        if presenter.isLastQuestion() {
             guard let statisticService else { return }
             // Модель результата текущей игры
             let result = GameResult(correct: correctAnswers,
-                                    total: questionsAmount,
+                                    total: presenter.questionsAmount,
                                     date: Date())
             // Сохраняем данные
             statisticService.store(current: result)
             
             // Получаем текст статистики
-            let text = "Ваш результат: \(correctAnswers)/\(questionsAmount)\n" + statisticService.getStatistics()
+            let text = "Ваш результат: \(correctAnswers)/\(presenter.questionsAmount)\n" + statisticService.getStatistics()
             
             // Модель алерта
             let alertModel = AlertModel(
@@ -162,7 +152,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
                 buttonText: "Сыграть ещё раз"
             ) { [weak self] in
                     guard let self = self else { return }
-                    self.currentQuestionIndex = 0
+                    self.presenter.resetQuestionIndex()
                     self.correctAnswers = 0
                     self.questionFactory?.requestNextQuestion()
                 }
@@ -171,7 +161,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
             alertPresenter?.showAlert(model: alertModel)
             
         } else { // Иначе продолжаем раунд
-            currentQuestionIndex += 1
+            presenter.switchToNextQuestion()
             
             // Показываем следующий вопрос
             self.questionFactory?.requestNextQuestion()
