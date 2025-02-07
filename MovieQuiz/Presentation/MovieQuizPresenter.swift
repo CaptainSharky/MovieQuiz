@@ -14,9 +14,9 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     // Фабрика вопросов
     private var questionFactory: QuestionFactoryProtocol?
     // Controller
-    private weak var viewController: MovieQuizViewController?
+    private weak var viewController: MovieQuizViewControllerProtocol?
     
-    init(viewController: MovieQuizViewController?) {
+    init(viewController: MovieQuizViewControllerProtocol?) {
         self.viewController = viewController
         
         // Инициализация хранителя статистики
@@ -59,7 +59,7 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     }
     
     // MARK: - Public functions
-    // Попробовать заугрзить снова
+    // Попробовать загрузить снова
     func tryLoadAgain() {
         questionFactory?.loadData()
     }
@@ -77,6 +77,14 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
         if truth { correctAnswers += 1}
         
         proceedWithAnswer(isCorrect: truth)
+    }
+    
+    // Конвертация вопроса в view model
+    func convert(model: QuizQuestion) -> QuizStepViewModel {
+        QuizStepViewModel(
+            image: UIImage(data: model.image) ?? UIImage(),
+            question: model.text,
+            questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
     }
     
     // MARK: - Private functions
@@ -107,14 +115,6 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     // Увеличить счётчик вопросов
     private func switchToNextQuestion() {
         currentQuestionIndex += 1
-    }
-    
-    // Конвертация вопроса в view model
-    private func convert(model: QuizQuestion) -> QuizStepViewModel {
-        QuizStepViewModel(
-            image: UIImage(data: model.image) ?? UIImage(),
-            question: model.text,
-            questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
     }
     
     // Проверка окончания раунда || следующий вопрос

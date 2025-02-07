@@ -1,6 +1,6 @@
 import UIKit
 
-final class MovieQuizViewController: UIViewController, AlertPresenterDelegate {
+final class MovieQuizViewController: UIViewController, MovieQuizViewControllerProtocol, AlertPresenterDelegate {
     @IBOutlet private weak var imageView: UIImageView! // Постер
     @IBOutlet private weak var textLabel: UILabel!     // Вопрос
     @IBOutlet private weak var counterLabel: UILabel!  // Счётчик
@@ -100,4 +100,18 @@ final class MovieQuizViewController: UIViewController, AlertPresenterDelegate {
     @IBAction private func noButtonClicked(_ sender: Any) {
         presenter.handleAnswer(false)
     }
+}
+
+protocol MovieQuizViewControllerProtocol: AnyObject {
+    var alertPresenter: AlertPresenterProtocol? { get set }
+    
+    func show(quiz step: QuizStepViewModel)
+    
+    func showLoadingIndicator()
+    func hideLoadingIndicator()
+    
+    func drawBorder(_ isCorrect: Bool)
+    func switchButtonMode(to mode: Bool)
+    
+    func showNetworkError(message: String)
 }
