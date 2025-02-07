@@ -1,6 +1,6 @@
 import UIKit
 
-final class MovieQuizPresenter {
+final class MovieQuizPresenter: QuestionFactoryDelegate {
     // Количество вопросов
     let questionsAmount: Int = 10
     // Индекс текущего вопроса
@@ -9,13 +9,57 @@ final class MovieQuizPresenter {
     var currentQuestion: QuizQuestion?
     // Controller
     weak var viewController: MovieQuizViewController?
+    // Кол-во правильных ответов
+    var correctAnswers: Int = 0
+    // Фабрика вопросов
+    var questionFactory: QuestionFactoryProtocol?
+    
+    init(viewController: MovieQuizViewController?) {
+        self.viewController = viewController
+        
+        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+        questionFactory?.loadData()
+        viewController?.showLoadingIndicator()
+    }
+    
+    // MARK: - QuestionFactoryDelegate
+    // Получили модель вопроса
+    // Получили модель вопроса
+    func didReceiveNextQuestion(question: QuizQuestion?) {
+        guard let question = question else {
+            return
+        }
+        
+        currentQuestion = question
+        let viewModel = convert(model: question)
+        
+        // Отображение полученного вопроса
+        DispatchQueue.main.async { [weak self] in
+            self?.viewController?.show(quiz: viewModel)
+        }
+    }
+    
+    func didLoadDataFromServer() {
+        viewController?.hideLoadingIndicator()
+        questionFactory?.requestNextQuestion()
+    }
+    
+    func didFailToLoadData(with error: Error) {
+        viewController?.showNetworkError(message: error.localizedDescription)
+    }
+    
+    func didFailToLoadPoster() {
+        viewController?.showNetworkError(message: "Не удалось загрузить постер фильма")
+    }
     
     func isLastQuestion() -> Bool {
         currentQuestionIndex == questionsAmount - 1
     }
     
-    func resetQuestionIndex() {
+    func restartGame() {
         currentQuestionIndex = 0
+        correctAnswers = 0
+        questionFactory?.requestNextQuestion()
     }
     
     func switchToNextQuestion() {
@@ -39,6 +83,45 @@ final class MovieQuizPresenter {
             return
         }
         
-        viewController?.showAnswerResult(isCorrect: answer == currentQuestion.correctAnswer)
+        let truth = answer == currentQuestion.correctAnswer
+        if truth { correctAnswers += 1}
+        
+        viewController?.showAnswerResult(isCorrect: truth)
+    }
+    
+    // Проверка окончания раунда || следующий вопрос
+    func showNextQuestionOrResult() {
+        // Завершаем раунд если кончились вопросы
+        if self.isLastQuestion() {
+            guard let statisticService = viewController?.statisticService else { return }
+            // Модель результата текущей игры
+            let result = GameResult(correct: correctAnswers,
+                                    total: questionsAmount,
+                                    date: Date())
+            // Сохраняем данные
+            statisticService.store(current: result)
+            
+            // Получаем текст статистики
+            let text = "Ваш результат: \(correctAnswers)/\(questionsAmount)\n" + statisticService.getStatistics()
+            
+            // Модель алерта
+            let alertModel = AlertModel(
+                title: "Этот раунд окончен!",
+                message: text,
+                buttonText: "Сыграть ещё раз"
+            ) { [weak self] in
+                    guard let self = self else { return }
+                    self.restartGame()
+                }
+            
+            // Делегируем показ алерта в презентер
+            viewController?.alertPresenter?.showAlert(model: alertModel)
+            
+        } else { // Иначе продолжаем раунд
+            self.switchToNextQuestion()
+            
+            // Показываем следующий вопрос
+            questionFactory?.requestNextQuestion()
+        }
     }
 }

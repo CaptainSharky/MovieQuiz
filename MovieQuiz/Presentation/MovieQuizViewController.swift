@@ -1,34 +1,26 @@
 import UIKit
 
-final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, AlertPresenterDelegate {
+final class MovieQuizViewController: UIViewController, AlertPresenterDelegate {
     @IBOutlet private weak var imageView: UIImageView! // Постер
     @IBOutlet private weak var textLabel: UILabel!     // Вопрос
     @IBOutlet private weak var counterLabel: UILabel!  // Счётчик
     @IBOutlet private weak var yesButton: UIButton!    // Кнопка "Да"
     @IBOutlet private weak var noButton: UIButton!     // Кнопка "Нет"
     @IBOutlet private weak var activityIndicator: UIActivityIndicatorView! // Индикатор загрузки
-    // Кол-во правильных ответов
-    private var correctAnswers: Int = 0
-    // Фабрика вопросов
-    private var questionFactory: QuestionFactoryProtocol?
     // Экран алерта
-    private var alertPresenter: AlertPresenterProtocol?
+    var alertPresenter: AlertPresenterProtocol?
     // Хранение статистики
-    private var statisticService: StatisticServiceProtocol?
+    var statisticService: StatisticServiceProtocol?
     // Presenter
-    private let presenter = MovieQuizPresenter()
+    private var presenter: MovieQuizPresenter!
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        presenter.viewController = self
-        
-        // Делегирование в фабрику вопросов
-        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+        presenter = MovieQuizPresenter(viewController: self)
         
         // Загружаем данные
         showLoadingIndicator()
-        questionFactory?.loadData()
         
         // Делегирование в экран алерта
         let alertPresenter = AlertPresenter()
@@ -37,35 +29,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         
         // Инициализация хранителя статистики
         statisticService = StatisticService()
-    }
-    
-    // MARK: - QuestionFactoryDelegate
-    // Получили модель вопроса
-    func didReceiveNextQuestion(question: QuizQuestion?) {
-        guard let question = question else {
-            return
-        }
-        
-        presenter.currentQuestion = question
-        let viewModel = presenter.convert(model: question)
-        
-        // Отображение полученного вопроса
-        DispatchQueue.main.async { [weak self] in
-            self?.show(quiz: viewModel)
-        }
-    }
-    
-    func didLoadDataFromServer() {
-        hideLoadingIndicator()
-        questionFactory?.requestNextQuestion()
-    }
-    
-    func didFailToLoadData(with error: Error) {
-        showNetworkError(message: error.localizedDescription)
-    }
-    
-    func didFailToLoadPoster() {
-        showNetworkError(message: "Не удалось загрузить постер фильма")
     }
     
     // MARK: - AlertPresenterDelegate
@@ -81,12 +44,10 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         // Рисуем рамку
         drawBorder(isCorrect)
         
-        if isCorrect { correctAnswers += 1}
-        
         // Задержка 1 секунда перед след. вопросом
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             guard let self = self else { return }
-            self.showNextQuestionOrResult()
+            self.presenter.showNextQuestionOrResult()
         }
     }
     
@@ -96,38 +57,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         noButton.isEnabled = mode
     }
     
-    // MARK: - Private functions
-    // Отображение индикатора загрузки
-    private func showLoadingIndicator() {
-        activityIndicator.startAnimating()
-    }
-    
-    // Выключение индикатора загрузки
-    private func hideLoadingIndicator() {
-        activityIndicator.stopAnimating()
-    }
-    
-    // Отобразить алерт сетевой ошибки
-    private func showNetworkError(message: String) {
-        hideLoadingIndicator()
-        
-        let alertModel = AlertModel(
-            title: "Ошибка",
-            message: message,
-            buttonText: "Попробовать ещё раз"
-        ) { [weak self] in
-            guard let self = self else { return }
-            self.presenter.resetQuestionIndex()
-            self.correctAnswers = 0
-            
-            self.questionFactory?.loadData()
-        }
-        
-        alertPresenter?.showAlert(model: alertModel)
-    }
-    
     // Отобразить вопрос
-    private func show(quiz step: QuizStepViewModel) {
+    func show(quiz step: QuizStepViewModel) {
         // Сбрасываем рамку предыдущего ответа
         resetAnswerBorder()
         // Включаем кнопки
@@ -138,48 +69,37 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         counterLabel.text = step.questionNumber
     }
     
+    // MARK: - Private functions
+    // Отображение индикатора загрузки
+    func showLoadingIndicator() {
+        activityIndicator.startAnimating()
+    }
+    
+    // Выключение индикатора загрузки
+    func hideLoadingIndicator() {
+        activityIndicator.stopAnimating()
+    }
+    
+    // Отобразить алерт сетевой ошибки
+    func showNetworkError(message: String) {
+        hideLoadingIndicator()
+        
+        let alertModel = AlertModel(
+            title: "Ошибка",
+            message: message,
+            buttonText: "Попробовать ещё раз"
+        ) { [weak self] in
+            guard let self = self else { return }
+            self.presenter.restartGame()
+        }
+        
+        alertPresenter?.showAlert(model: alertModel)
+    }
+    
     // Сбросить рамку ответа
     private func resetAnswerBorder() {
         imageView.layer.borderWidth = 0
         imageView.layer.borderColor = UIColor.clear.cgColor
-    }
-    
-    // Проверка окончания раунда || следующий вопрос
-    private func showNextQuestionOrResult() {
-        // Завершаем раунд если кончились вопросы
-        if presenter.isLastQuestion() {
-            guard let statisticService else { return }
-            // Модель результата текущей игры
-            let result = GameResult(correct: correctAnswers,
-                                    total: presenter.questionsAmount,
-                                    date: Date())
-            // Сохраняем данные
-            statisticService.store(current: result)
-            
-            // Получаем текст статистики
-            let text = "Ваш результат: \(correctAnswers)/\(presenter.questionsAmount)\n" + statisticService.getStatistics()
-            
-            // Модель алерта
-            let alertModel = AlertModel(
-                title: "Этот раунд окончен!",
-                message: text,
-                buttonText: "Сыграть ещё раз"
-            ) { [weak self] in
-                    guard let self = self else { return }
-                    self.presenter.resetQuestionIndex()
-                    self.correctAnswers = 0
-                    self.questionFactory?.requestNextQuestion()
-                }
-            
-            // Делегируем показ алерта в презентер
-            alertPresenter?.showAlert(model: alertModel)
-            
-        } else { // Иначе продолжаем раунд
-            presenter.switchToNextQuestion()
-            
-            // Показываем следующий вопрос
-            self.questionFactory?.requestNextQuestion()
-        }
     }
     
     // Нарисовать рамку-ответ
