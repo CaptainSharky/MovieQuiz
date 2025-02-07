@@ -2,19 +2,19 @@ import UIKit
 
 final class MovieQuizPresenter: QuestionFactoryDelegate {
     // Количество вопросов
-    let questionsAmount: Int = 10
+    private let questionsAmount: Int = 10
+    // Хранение статистики
+    private let statisticService: StatisticServiceProtocol!
     // Индекс текущего вопроса
     private var currentQuestionIndex: Int = 0
     // Вопрос для пользователя
-    var currentQuestion: QuizQuestion?
-    // Controller
-    private weak var viewController: MovieQuizViewController?
+    private var currentQuestion: QuizQuestion?
     // Кол-во правильных ответов
-    var correctAnswers: Int = 0
+    private var correctAnswers: Int = 0
     // Фабрика вопросов
     private var questionFactory: QuestionFactoryProtocol?
-    // Хранение статистики
-    private let statisticService: StatisticServiceProtocol!
+    // Controller
+    private weak var viewController: MovieQuizViewController?
     
     init(viewController: MovieQuizViewController?) {
         self.viewController = viewController
@@ -30,7 +30,6 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     }
     
     // MARK: - QuestionFactoryDelegate
-    // Получили модель вопроса
     // Получили модель вопроса
     func didReceiveNextQuestion(question: QuizQuestion?) {
         guard let question = question else {
@@ -59,26 +58,10 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
         viewController?.showNetworkError(message: "Не удалось загрузить постер фильма")
     }
     
-    func isLastQuestion() -> Bool {
-        currentQuestionIndex == questionsAmount - 1
-    }
-    
-    func restartGame() {
-        currentQuestionIndex = 0
-        correctAnswers = 0
-        questionFactory?.requestNextQuestion()
-    }
-    
-    func switchToNextQuestion() {
-        currentQuestionIndex += 1
-    }
-    
-    // Конвертация из mock в view model
-    func convert(model: QuizQuestion) -> QuizStepViewModel {
-        QuizStepViewModel(
-            image: UIImage(data: model.image) ?? UIImage(),
-            question: model.text,
-            questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
+    // MARK: - Public functions
+    // Попробовать заугрзить снова
+    func tryLoadAgain() {
+        questionFactory?.loadData()
     }
     
     // Обработать ответ кнопки
@@ -93,11 +76,49 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
         let truth = answer == currentQuestion.correctAnswer
         if truth { correctAnswers += 1}
         
-        viewController?.showAnswerResult(isCorrect: truth)
+        proceedWithAnswer(isCorrect: truth)
+    }
+    
+    // MARK: - Private functions
+    // Рестартнуть игры
+    private func restartGame() {
+        currentQuestionIndex = 0
+        correctAnswers = 0
+        questionFactory?.requestNextQuestion()
+    }
+    
+    // Последний вопрос или нет
+    private func isLastQuestion() -> Bool {
+        currentQuestionIndex == questionsAmount - 1
+    }
+    
+    // Показ ответа + переход к след вопросу
+    private func proceedWithAnswer(isCorrect: Bool) {
+        // Рисуем рамку
+        viewController?.drawBorder(isCorrect)
+        
+        // Задержка 1 секунда перед след. вопросом
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            guard let self = self else { return }
+            self.proceedToNextQuestionOrResults()
+        }
+    }
+    
+    // Увеличить счётчик вопросов
+    private func switchToNextQuestion() {
+        currentQuestionIndex += 1
+    }
+    
+    // Конвертация вопроса в view model
+    private func convert(model: QuizQuestion) -> QuizStepViewModel {
+        QuizStepViewModel(
+            image: UIImage(data: model.image) ?? UIImage(),
+            question: model.text,
+            questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
     }
     
     // Проверка окончания раунда || следующий вопрос
-    func showNextQuestionOrResult() {
+    private func proceedToNextQuestionOrResults() {
         // Завершаем раунд если кончились вопросы
         if self.isLastQuestion() {
             guard let statisticService = statisticService else { return }

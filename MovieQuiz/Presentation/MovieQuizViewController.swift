@@ -17,10 +17,7 @@ final class MovieQuizViewController: UIViewController, AlertPresenterDelegate {
         super.viewDidLoad()
         presenter = MovieQuizPresenter(viewController: self)
         
-        // Загружаем данные
-        showLoadingIndicator()
-        
-        // Делегирование в экран алерта
+        // Делегирование в алерт
         let alertPresenter = AlertPresenter()
         alertPresenter.delegate = self
         self.alertPresenter = alertPresenter
@@ -34,18 +31,6 @@ final class MovieQuizViewController: UIViewController, AlertPresenterDelegate {
     }
     
     // MARK: - Public functions
-    // Отрисовка ответа + переход
-    func showAnswerResult(isCorrect: Bool) {
-        // Рисуем рамку
-        drawBorder(isCorrect)
-        
-        // Задержка 1 секунда перед след. вопросом
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            guard let self = self else { return }
-            self.presenter.showNextQuestionOrResult()
-        }
-    }
-    
     // Вкл/выкл кнопок
     func switchButtonMode(to mode: Bool) {
         yesButton.isEnabled = mode
@@ -64,7 +49,6 @@ final class MovieQuizViewController: UIViewController, AlertPresenterDelegate {
         counterLabel.text = step.questionNumber
     }
     
-    // MARK: - Private functions
     // Отображение индикатора загрузки
     func showLoadingIndicator() {
         activityIndicator.startAnimating()
@@ -85,24 +69,25 @@ final class MovieQuizViewController: UIViewController, AlertPresenterDelegate {
             buttonText: "Попробовать ещё раз"
         ) { [weak self] in
             guard let self = self else { return }
-            self.presenter.restartGame()
+            self.presenter.tryLoadAgain()
         }
         
         alertPresenter?.showAlert(model: alertModel)
     }
     
-    // Сбросить рамку ответа
-    private func resetAnswerBorder() {
-        imageView.layer.borderWidth = 0
-        imageView.layer.borderColor = UIColor.clear.cgColor
-    }
-    
     // Нарисовать рамку-ответ
-    private func drawBorder(_ isCorrect: Bool) {
+    func drawBorder(_ isCorrect: Bool) {
         imageView.layer.masksToBounds = true
         imageView.layer.borderWidth = 8
         imageView.layer.cornerRadius = 20
         imageView.layer.borderColor = isCorrect ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
+    }
+    
+    // MARK: - Private functions
+    // Сбросить рамку ответа
+    private func resetAnswerBorder() {
+        imageView.layer.borderWidth = 0
+        imageView.layer.borderColor = UIColor.clear.cgColor
     }
     
     // MARK: - Actions
