@@ -8,18 +8,25 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     // Вопрос для пользователя
     var currentQuestion: QuizQuestion?
     // Controller
-    weak var viewController: MovieQuizViewController?
+    private weak var viewController: MovieQuizViewController?
     // Кол-во правильных ответов
     var correctAnswers: Int = 0
     // Фабрика вопросов
-    var questionFactory: QuestionFactoryProtocol?
+    private var questionFactory: QuestionFactoryProtocol?
+    // Хранение статистики
+    private let statisticService: StatisticServiceProtocol!
     
     init(viewController: MovieQuizViewController?) {
         self.viewController = viewController
         
+        // Инициализация хранителя статистики
+        statisticService = StatisticService()
+        // Инициализация фабрики вопросов
         questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
-        questionFactory?.loadData()
+        // Включаем индикатор загрузки
         viewController?.showLoadingIndicator()
+        // Загружаем данные
+        questionFactory?.loadData()
     }
     
     // MARK: - QuestionFactoryDelegate
@@ -93,7 +100,7 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     func showNextQuestionOrResult() {
         // Завершаем раунд если кончились вопросы
         if self.isLastQuestion() {
-            guard let statisticService = viewController?.statisticService else { return }
+            guard let statisticService = statisticService else { return }
             // Модель результата текущей игры
             let result = GameResult(correct: correctAnswers,
                                     total: questionsAmount,

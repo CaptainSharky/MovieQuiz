@@ -9,8 +9,6 @@ final class MovieQuizViewController: UIViewController, AlertPresenterDelegate {
     @IBOutlet private weak var activityIndicator: UIActivityIndicatorView! // Индикатор загрузки
     // Экран алерта
     var alertPresenter: AlertPresenterProtocol?
-    // Хранение статистики
-    var statisticService: StatisticServiceProtocol?
     // Presenter
     private var presenter: MovieQuizPresenter!
     
@@ -26,9 +24,6 @@ final class MovieQuizViewController: UIViewController, AlertPresenterDelegate {
         let alertPresenter = AlertPresenter()
         alertPresenter.delegate = self
         self.alertPresenter = alertPresenter
-        
-        // Инициализация хранителя статистики
-        statisticService = StatisticService()
     }
     
     // MARK: - AlertPresenterDelegate
