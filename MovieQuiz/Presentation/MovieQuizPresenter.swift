@@ -4,7 +4,7 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     // Количество вопросов
     private let questionsAmount: Int = 10
     // Хранение статистики
-    private let statisticService: StatisticServiceProtocol!
+    private let statisticService: StatisticServiceProtocol?
     // Индекс текущего вопроса
     private var currentQuestionIndex: Int = 0
     // Вопрос для пользователя
