@@ -7,10 +7,8 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
     @IBOutlet private weak var yesButton: UIButton!    // Кнопка "Да"
     @IBOutlet private weak var noButton: UIButton!     // Кнопка "Нет"
     @IBOutlet private weak var activityIndicator: UIActivityIndicatorView! // Индикатор загрузки
-    // Экран алерта
-    var alertPresenter: AlertPresenterProtocol?
-    // Presenter
-    private var presenter: MovieQuizPresenter!
+    private var presenter: MovieQuizPresenter?  // Presenter
+    var alertPresenter: AlertPresenterProtocol? // Экран алерта
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -69,7 +67,7 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
             buttonText: "Попробовать ещё раз"
         ) { [weak self] in
             guard let self = self else { return }
-            self.presenter.tryLoadAgain()
+            self.presenter?.tryLoadAgain()
         }
         
         alertPresenter?.showAlert(model: alertModel)
@@ -93,12 +91,12 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
     // MARK: - Actions
     // Нажал "Да"
     @IBAction private func yesButtonClicked(_ sender: Any) {
-        presenter.handleAnswer(true)
+        presenter?.handleAnswer(true)
     }
     
     // Нажал "Нет"
     @IBAction private func noButtonClicked(_ sender: Any) {
-        presenter.handleAnswer(false)
+        presenter?.handleAnswer(false)
     }
 }
 
