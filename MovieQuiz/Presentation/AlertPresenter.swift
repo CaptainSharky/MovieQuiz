@@ -8,7 +8,7 @@ final class AlertPresenter: AlertPresenterProtocol {
         let alert = UIAlertController(title: model.title,
                                         message: model.message,
                                         preferredStyle: .alert)
-        alert.view.accessibilityIdentifier = "Game results"
+        alert.view.accessibilityIdentifier = AccessIDEnum.gameResults.rawValue
         
         // Кнопка действия
         let action = UIAlertAction(title: model.buttonText,
