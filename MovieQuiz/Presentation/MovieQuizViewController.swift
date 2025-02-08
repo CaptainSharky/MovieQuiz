@@ -25,7 +25,7 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
     // Отображение алерта
     func didReceiveAlert(alert: UIAlertController, action: UIAlertAction) {
         alert.addAction(action)
-        self.present(alert, animated: true)
+        present(alert, animated: true)
     }
     
     // MARK: - Public functions

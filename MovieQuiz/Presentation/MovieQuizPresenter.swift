@@ -120,7 +120,7 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     // Проверка окончания раунда || следующий вопрос
     private func proceedToNextQuestionOrResults() {
         // Завершаем раунд если кончились вопросы
-        if self.isLastQuestion() {
+        if isLastQuestion() {
             guard let statisticService = statisticService else { return }
             // Модель результата текущей игры
             let result = GameResult(correct: correctAnswers,
@@ -146,7 +146,7 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
             viewController?.alertPresenter?.showAlert(model: alertModel)
             
         } else { // Иначе продолжаем раунд
-            self.switchToNextQuestion()
+            switchToNextQuestion()
             
             // Показываем следующий вопрос
             questionFactory?.requestNextQuestion()
