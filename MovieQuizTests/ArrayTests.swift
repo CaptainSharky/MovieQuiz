@@ -2,7 +2,7 @@ import Foundation
 import XCTest
 @testable import MovieQuiz
 
-class ArrayTests: XCTestCase {
+final class ArrayTests: XCTestCase {
     // Успешное взятие элемента по индексу
     func testGetValueInRange() throws {
         // Given
@@ -14,7 +14,7 @@ class ArrayTests: XCTestCase {
         XCTAssertEqual(value, 2)
     }
     // Взятие элемента по неправильному индексу
-    func testGetValueOufOfRange() throws {
+    func testGetValueOutOfRange() throws {
         // Given
         let array = [1, 1, 2, 3, 5]
         // When
